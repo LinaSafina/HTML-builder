@@ -1,40 +1,42 @@
 const { readdir, readFile, writeFile } = require('fs/promises');
 const path = require('path');
 
-const chunks = [];
-
-const readFiles = async (filePath) => {
+const readStyleFiles = async (filePath) => {
   try {
-    const data = await readFile(filePath, { encoding: 'utf-8' });
-
-    chunks.push(data);
+    return await readFile(filePath, { encoding: 'utf-8' });
   } catch (err) {
     console.log(err);
   }
 };
 
-const readFolder = async (folderPath) => {
+const readStyleFolder = async (folderPath) => {
   try {
     const files = await readdir(folderPath, { withFileTypes: true });
     const filteredFiles = files.filter(
       (file) => file.isFile() && path.extname(file.name) === '.css'
     );
+    const fullData = [];
 
     for (let file of filteredFiles) {
-      await readFiles(path.join(folderPath, file.name));
+      const data = await readStyleFiles(path.join(folderPath, file.name));
+      fullData.push(data);
     }
+
+    return fullData;
   } catch (err) {
     console.log(err);
   }
 };
 
-const writeFiles = async (folderPath) => {
+const mergeStyles = async (folderPath) => {
   try {
-    await readFolder(path.join(__dirname, 'styles'));
-    await writeFile(folderPath, chunks);
+    const fullData = await readStyleFolder(path.join(__dirname, 'styles'));
+    await writeFile(folderPath, fullData);
+
+    console.log('Styles have been merged successfully!');
   } catch (err) {
     console.log(err);
   }
 };
 
-writeFiles(path.join(__dirname, 'project-dist', 'bundle.css'));
+mergeStyles(path.join(__dirname, 'project-dist', 'bundle.css'));
